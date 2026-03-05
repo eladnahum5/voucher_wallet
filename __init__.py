@@ -6,7 +6,7 @@ from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
 from .sqlite_helper import VoucherWalletDatabase
-from .views import AddVoucherView, RemoveVoucherView
+from .views import AddVoucherView, ReinitializeDatabaseView, RemoveVoucherView
 
 import sqlite3
 
@@ -23,6 +23,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     hass.http.register_view(AddVoucherView)
     hass.http.register_view(RemoveVoucherView)
+    hass.http.register_view(ReinitializeDatabaseView)
 
     # Return boolean to indicate that initialization was successfully.
     return True

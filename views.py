@@ -37,6 +37,19 @@ class RemoveVoucherView(HomeAssistantView):
             return self.json({"error": "Missing code"}, status=400)
         
         hass = request.app["hass"]
-        hass.data[DOMAIN]["db"].remove_voucher(int(code))  # type: ignore
+        hass.data[DOMAIN]["db"].remove_voucher(int(code))
         return self.json({"status": True, "code": code})
+    
+class ReinitializeDatabaseView(HomeAssistantView):
+    """View to reinitialize the database via HTTP POST."""
+
+    url = f"/api/{DOMAIN}/reinitialize_database"
+    name = f"api:{DOMAIN}:reinitialize_database"
+    requires_auth = False # Only for testing, should be True in production
+
+    async def get(self, request: web.Request) -> web.Response:
+        """Handle GET requests."""
+        hass = request.app["hass"]
+        hass.data[DOMAIN]["db"].reinitialize_database() 
+        return self.json({"status": True, "message": "Database reinitialized"})
         

@@ -40,3 +40,10 @@ class VoucherWalletDatabase:
             c = conn.cursor()
             c.execute('DELETE FROM vouchers WHERE code = ?', (code,))
             conn.commit()
+
+    def reinitialize_database(self):
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            c.execute('DROP TABLE IF EXISTS vouchers')
+            conn.commit()
+        self._initialize_database()
