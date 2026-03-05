@@ -13,8 +13,10 @@ import sqlite3
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Setup our skeleton component."""
-    # States are in the format DOMAIN.OBJECT_ID.
-    hass.states.async_set('voucher_wallet.total_value', 0)
+    old_states = [s.entity_id for s in hass.states.async_all() 
+                  if s.entity_id.startswith(f"{DOMAIN}.")]
+    for state in old_states:
+        hass.states.async_remove(state)
 
     db = VoucherWalletDatabase(hass)  # Initialize the database
     hass.data[DOMAIN] = {"db": db}  # Store the database instance in hass.data for later use
