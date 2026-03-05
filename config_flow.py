@@ -1,4 +1,7 @@
-"""Config flow for Voucher Wallet integration."""
+"""
+Config flow for Voucher Wallet integration.
+Currently not in use, but can be used in the future if needed.
+"""
 from __future__ import annotations
 
 import asyncio
