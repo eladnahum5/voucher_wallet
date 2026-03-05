@@ -17,9 +17,7 @@ import asyncio
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 
-# The domain of your component. Should be equal to the name of your component.
-DOMAIN = "voucher_wallet"
-
+from .const import DOMAIN
 
 @asyncio.coroutine
 def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
