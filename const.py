@@ -1,0 +1,1 @@
+DOMAIN = "voucher_wallet"
