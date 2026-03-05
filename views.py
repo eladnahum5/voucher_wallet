@@ -16,10 +16,11 @@ class AddVoucherView(HomeAssistantView):
         value = request.query.get("value")
         
         if not code or not value:
-            return web.json_response({"error": "Missing code or value"}, status=400)
+            return self.json({"error": "Missing code or value"}, status=400)
         
         hass = request.app["hass"]
         hass.data[DOMAIN]["db"].add_voucher(int(code), float(value))
+        return self.json({"status": True, "code": code, "value": value, "redeemed": False})
 
 class RemoveVoucherView(HomeAssistantView):
     """View to remove a voucher via HTTP POST."""
@@ -33,7 +34,9 @@ class RemoveVoucherView(HomeAssistantView):
         code = request.query.get("code")
 
         if not code:
-            return web.json_response({"error": "Missing code"}, status=400)
+            return self.json({"error": "Missing code"}, status=400)
         
+        hass = request.app["hass"]
         hass.data[DOMAIN]["db"].remove_voucher(int(code))  # type: ignore
+        return self.json({"status": True, "code": code})
         
