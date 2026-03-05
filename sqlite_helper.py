@@ -1,12 +1,18 @@
 # helper to push and pull data from the sqlite server in home assistant
 
+import os
 import sqlite3
+
+from aiohttp import request
 
 
 class VoucherWalletDatabase:
-    def __init__(self, db_path='voucher_wallet.db'):
-        self.db_path = db_path
-        
+    def __init__(self, hass):
+        self.hass = hass
+        db_dir = self.hass.config.path("voucher_wallet")
+        os.makedirs(db_dir, exist_ok=True)
+        self.db_path = os.path.join(db_dir, "voucher_wallet.db")
+
         # Initialize the database and create the vouchers table if it doesn't exist
         self._initialize_database()
 
