@@ -14,11 +14,12 @@ class AddVoucherView(HomeAssistantView):
         """Handle GET requests."""
         code = request.query.get("code")
         value = request.query.get("value")
-
+        
         if not code or not value:
             return web.json_response({"error": "Missing code or value"}, status=400)
         
-        hass.data[DOMAIN]["db"].add_voucher(int(code), float(value))  # type: ignore
+        hass = request.app["hass"]
+        hass.data[DOMAIN]["db"].add_voucher(int(code), float(value))
 
 class RemoveVoucherView(HomeAssistantView):
     """View to remove a voucher via HTTP POST."""
