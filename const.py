@@ -1,1 +1,0 @@
-DOMAIN = "voucher_wallet"

@@ -1,9 +1,31 @@
-# most basic 1 state init file for voucher_wallet domain for Home Assistant
-from .const import DOMAIN
+"""
+The "hello world" custom component.
 
-async def async_setup_entry(hass, entry):
-    """Set up the Hello, state! config entry."""
-    # This is where you would set up your integration, e.g. by creating an instance of your main class and adding it to hass.data
-    # For example:
-    hass.state.set(f"{DOMAIN}.state", "Hello, state!")
+This component implements the bare minimum that a component should implement.
+
+Configuration:
+
+To use the hello_world component you will need to add the following to your
+configuration.yaml file.
+
+hello_world_async:
+"""
+from __future__ import annotations
+
+import asyncio
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.typing import ConfigType
+
+# The domain of your component. Should be equal to the name of your component.
+DOMAIN = "hello_world_async"
+
+
+@asyncio.coroutine
+def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Setup our skeleton component."""
+    # States are in the format DOMAIN.OBJECT_ID.
+    hass.states.async_set('hello_world_async.Hello_World', 'Works!')
+
+    # Return boolean to indicate that initialization was successfully.
     return True
