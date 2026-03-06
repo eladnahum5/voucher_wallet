@@ -8,8 +8,6 @@ from .const import DOMAIN
 from .sqlite_helper import VoucherWalletDatabase
 from .views import AddVoucherView, ReinitializeDatabaseView, RemoveVoucherView
 
-import sqlite3
-
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Setup our skeleton component."""

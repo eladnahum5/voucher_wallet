@@ -3,12 +3,12 @@
 import os
 import sqlite3
 
-from aiohttp import request
 from .const import DOMAIN, VOUCHER_PARAMETERS
 
 
 class VoucherWalletDatabase:
     def __init__(self, hass):
+        """Initialize the database connection and create the vouchers table if it doesn't exist."""
         self.hass = hass
         db_dir = self.hass.config.path(DOMAIN)
         os.makedirs(db_dir, exist_ok=True)
@@ -66,12 +66,24 @@ class VoucherWalletDatabase:
             conn.commit()
 
     def remove_voucher(self, code: int):
+        """Remove a voucher from the database based on its code."""
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
             c.execute('DELETE FROM vouchers WHERE code = ?', (code,))
             conn.commit()
 
+    def get_all_vouchers(self):
+        """Retrieve all vouchers from the database and return them as a list of dictionaries."""
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            c.execute('SELECT * FROM vouchers')
+            rows = c.fetchall()
+            columns = [description[0] for description in c.description]
+            vouchers = [dict(zip(columns, row)) for row in rows]
+            return vouchers
+
     def reinitialize_database(self):
+        """Reinitialize the database by dropping and recreating the vouchers table."""
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
             c.execute('DROP TABLE IF EXISTS vouchers')
