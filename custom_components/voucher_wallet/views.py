@@ -42,6 +42,27 @@ class ItemView(HomeAssistantView):
         return self.json({"status": True})
 
 
+class ItemIdView(HomeAssistantView):
+    """View to delete an item by ID via HTTP DELETE."""
+
+    url = f"/api/{DOMAIN}/items/{{id}}"
+    name = f"api:{DOMAIN}:items:id"
+    requires_auth = True
+
+    async def delete(self, request: web.Request) -> web.Response:
+        """Handle DELETE requests to delete an item by ID."""
+        item_id = request.match_info["id"]
+        if not item_id.isdigit():
+            return self.json({"error": "Invalid item ID"}, status=400)
+
+        hass = request.app["hass"]
+        success = hass.data[DOMAIN]["db"].delete_item_by_code(int(item_id))
+        if not success:
+            return self.json({"error": "Item not found"}, status=404)
+
+        return self.json({"status": True})
+
+
 class ReinitializeDatabaseView(HomeAssistantView):
     """View to reinitialize the database via HTTP POST."""
 

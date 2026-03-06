@@ -7,7 +7,7 @@ from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
 from .sqlite_helper import VoucherWalletDatabase
-from .views import ItemView, ReinitializeDatabaseView
+from .views import ItemIdView, ItemView, ReinitializeDatabaseView
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -17,6 +17,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data[DOMAIN] = {"db": db}
 
     hass.http.register_view(ItemView)
+    hass.http.register_view(ItemIdView)
     hass.http.register_view(ReinitializeDatabaseView)
 
     return True
