@@ -69,7 +69,7 @@ class VoucherWalletDatabase:
         """Remove a voucher from the database based on its code."""
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
-            c.execute('DELETE FROM vouchers WHERE code = ?', (code,))
+            c.execute('DELETE FROM vouchers WHERE redeem_code = ?', (code,))
             conn.commit()
 
     def get_all_vouchers(self):
