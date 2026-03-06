@@ -1,4 +1,56 @@
-import { ITEM_PARAMETERS } from "./const.js";
+// Define the parameters for the voucher wallet items
+export const ITEM_PARAMETERS = {
+    name: {
+        type: "string",
+        description: "Name of the item",
+        required: true,
+    },
+    issuer: {
+        type: "string",
+        description: "Issuer of the item",
+        required: true,
+    },
+    redeem_code: {
+        type: "integer",
+        description: "Unique item code",
+        required: true,
+    },
+    code_type: {
+        type: "string",
+        description: "Type of the item code (e.g., qr, barcode)",
+        required: true,
+    },
+    pin_code: {
+        type: "integer",
+        description: "PIN code for redeeming the item",
+        required: false,
+    },
+    issue_date: {
+        type: "string",
+        description: "Date when the item was issued (ISO format)",
+        required: true,
+    },
+    expiry_date: {
+        type: "string",
+        description: "Date when the item expires (ISO format)",
+        required: false,
+    },
+    description: {
+        type: "string",
+        description: "Additional details about the item",
+        required: false,
+    },
+    logo_slug: {
+        type: "string",
+        description: "Slug for the item's logo image",
+        required: false,
+    },
+    value: {
+        type: "float",
+        description: "Monetary value of the item",
+        required: true,
+    },
+};
 
 class VoucherWalletCard extends HTMLElement {
     // Define properties for the card
@@ -16,6 +68,10 @@ class VoucherWalletCard extends HTMLElement {
     async displayVouchers() {
         const vouchers = await this.config.hass.callApi("GET", "/api/voucher_wallet/items");
         this.content.innerHTML = '';
+        if (vouchers.length === 0) {
+            this.content.innerHTML = '<p>No vouchers available.</p>';
+            return;
+        }
         vouchers.forEach(voucher => {
             const voucherElement = document.createElement('div');
             voucherElement.classList.add('voucher');
