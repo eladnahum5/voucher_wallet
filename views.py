@@ -1,7 +1,7 @@
 from homeassistant.components.http import HomeAssistantView
 from aiohttp import web
 
-from .const import DOMAIN
+from .const import DOMAIN, VOUCHER_PARAMETERS
 
 class AddVoucherView(HomeAssistantView):
     """View to add a voucher via HTTP POST."""
@@ -11,16 +11,19 @@ class AddVoucherView(HomeAssistantView):
     requires_auth = False # Only for testing, should be True in production
 
     async def get(self, request: web.Request) -> web.Response:
-        """Handle GET requests."""
-        code = request.query.get("code")
-        value = request.query.get("value")
-        
-        if not code or not value:
-            return self.json({"error": "Missing code or value"}, status=400)
+        """
+        Handle GET requests.
+        Expects voucher data as query parameters based on VOUCHER_PARAMETERS.
+        """
+        data = {}
+        for param, details in VOUCHER_PARAMETERS.items():
+            data[param] = request.query.get(param)
+            if details["required"] and not data[param]:
+                return self.json({"error": f"Missing required parameter: {param}"}, status=400)
         
         hass = request.app["hass"]
-        hass.data[DOMAIN]["db"].add_voucher(int(code), float(value))
-        return self.json({"status": True, "code": code, "value": value, "redeemed": False})
+        hass.data[DOMAIN]["db"].add_voucher(data)
+        return self.json({"status": True})
 
 class RemoveVoucherView(HomeAssistantView):
     """View to remove a voucher via HTTP POST."""
@@ -38,7 +41,7 @@ class RemoveVoucherView(HomeAssistantView):
         
         hass = request.app["hass"]
         hass.data[DOMAIN]["db"].remove_voucher(int(code))
-        return self.json({"status": True, "code": code})
+        return self.json({"status": True})
     
 class ReinitializeDatabaseView(HomeAssistantView):
     """View to reinitialize the database via HTTP POST."""
@@ -51,5 +54,5 @@ class ReinitializeDatabaseView(HomeAssistantView):
         """Handle GET requests."""
         hass = request.app["hass"]
         hass.data[DOMAIN]["db"].reinitialize_database() 
-        return self.json({"status": True, "message": "Database reinitialized"})
+        return self.json({"status": True})
         
