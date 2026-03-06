@@ -1,0 +1,11 @@
+{
+  "domain": "voucher_wallet",
+  "name": "Voucher Wallet",
+  "codeowners": ["@eladnahum5"],
+  "dependencies": [],
+  "requirements": [],
+  "version": "0.1.0",
+  "documentation": "https://github.com/eladnahum5/voucher_wallet",
+  "issue_tracker": "https://github.com/eladnahum5/voucher_wallet/issues",
+  "iot_class": "local_push"
+}
