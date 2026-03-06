@@ -5,28 +5,28 @@ import sqlite3
 
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, VOUCHER_PARAMETERS
+from .const import DOMAIN, ITEM_PARAMETERS, TABLE_NAME
 
 
 class VoucherWalletDatabase:
     """Helper class for managing the SQLite database for the voucher_wallet component."""
 
     def __init__(self, hass: HomeAssistant | None) -> None:
-        """Initialize the database connection and create the vouchers table if it doesn't exist."""
+        """Initialize the database connection and create the items table if it doesn't exist."""
         self.hass = hass
         db_dir = self.hass.config.path(DOMAIN)
         Path(db_dir).mkdir(parents=True, exist_ok=True)
         self.db_path = Path(db_dir) / f"{DOMAIN}.db"
 
-        # Initialize the database and create the vouchers table if it doesn't exist
+        # Initialize the database and create the items table if it doesn't exist
         self._initialize_database()
 
     def _initialize_database(self):
-        """Create the vouchers table if it doesn't exist with columns based on VOUCHER_PARAMETERS dictionary."""
+        """Create the items table if it doesn't exist with columns based on ITEM_PARAMETERS dictionary."""
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
             columns = []
-            for param, details in VOUCHER_PARAMETERS.items():
+            for param, details in ITEM_PARAMETERS.items():
                 if details["type"] == "string":
                     columns.append(f"{param} TEXT")
                 elif details["type"] == "integer":
@@ -37,7 +37,7 @@ class VoucherWalletDatabase:
                     raise ValueError(f"Unsupported data type for parameter '{param}'")
             columns_sql = ", ".join(columns)
             c.execute(f"""
-                CREATE TABLE IF NOT EXISTS vouchers (
+                CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     {columns_sql},
                     redeemed BOOLEAN DEFAULT 0
@@ -45,47 +45,48 @@ class VoucherWalletDatabase:
             """)
             conn.commit()
 
-    def add_voucher(self, data: dict):
-        """Add a voucher to the database based on VOUCHER_PARAMETERS.
-
-        Example for parameter:
-        "name": {
-            "type": "string",
-            "description": "Name of the voucher",
-            "required": True
-        },
-        The amount of parameters can be changed in the const.py file, and this function will adapt to it
-        without known what is required and what is not, it will just insert None for the missing parameters.
-        """
+    def _execute_sql_query(self, query: str, params: tuple = ()):
+        """Execute a SQL query with optional parameters and return the results."""
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
-            columns = ", ".join(VOUCHER_PARAMETERS.keys())
-            placeholders = ", ".join("?" for _ in VOUCHER_PARAMETERS)
-            values = [data.get(param) for param in VOUCHER_PARAMETERS]
-            query = f"INSERT INTO vouchers ({columns}) VALUES ({placeholders})"  # noqa: S608
-            c.execute(query, values)
+            c.execute(query, params)
             conn.commit()
+            return c.fetchall()
 
-    def remove_voucher(self, code: int):
-        """Remove a voucher from the database based on its code."""
-        with sqlite3.connect(self.db_path) as conn:
-            c = conn.cursor()
-            c.execute("DELETE FROM vouchers WHERE redeem_code = ?", (code,))
-            conn.commit()
+    def insert_item(self, data: dict):
+        """Insert an item into the database based on ITEM_PARAMETERS."""
+        columns = ", ".join(ITEM_PARAMETERS.keys())
+        placeholders = ", ".join("?" for _ in ITEM_PARAMETERS)
+        values = [data.get(param) for param in ITEM_PARAMETERS]
+        query = f"INSERT INTO {TABLE_NAME} ({columns}) VALUES ({placeholders})"  # noqa: S608
+        self._execute_sql_query(query, tuple(values))
 
-    def get_all_vouchers(self):
-        """Retrieve all vouchers from the database and return them as a list of dictionaries."""
-        with sqlite3.connect(self.db_path) as conn:
-            c = conn.cursor()
-            c.execute("SELECT * FROM vouchers")
-            rows = c.fetchall()
-            columns = [description[0] for description in c.description]
-            return [dict(zip(columns, row, strict=False)) for row in rows]
+    def delete_item_by_code(self, code: int):
+        """Delete an item from the database based on its code."""
+        query = f"DELETE FROM {TABLE_NAME} WHERE redeem_code = ?"  # noqa: S608
+        self._execute_sql_query(query, (code,))
+
+    def fetch_items(self, codes: list[int] | None = None):
+        """Fetch items from the database. If codes are provided, fetch only those items; otherwise, fetch all items."""
+        if codes:
+            placeholders = ", ".join("?" for _ in codes)
+            query = f"SELECT * FROM {TABLE_NAME} WHERE redeem_code IN ({placeholders})"  # noqa: S608
+            rows = self._execute_sql_query(query, tuple(codes))
+        else:
+            query = f"SELECT * FROM {TABLE_NAME}"  # noqa: S608
+            rows = self._execute_sql_query(query)
+        if not rows:
+            return []
+        columns = [
+            description[0]
+            for description in sqlite3.connect(self.db_path).cursor().description
+        ]
+        return [dict(zip(columns, row, strict=False)) for row in rows]
 
     def reinitialize_database(self):
-        """Reinitialize the database by dropping and recreating the vouchers table."""
+        """Reinitialize the database by dropping and recreating the items table."""
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
-            c.execute("DROP TABLE IF EXISTS vouchers")
+            c.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
             conn.commit()
         self._initialize_database()

@@ -1,3 +1,5 @@
+import { ITEM_PARAMETERS } from "./const.js";
+
 class VoucherWalletCard extends HTMLElement {
     // Define properties for the card
     // it must be here because we need to access it in both setConfig and set hass methods
@@ -10,26 +12,17 @@ class VoucherWalletCard extends HTMLElement {
         this.config = config;
     }
 
-    // Read all vouchers using GET request to the API endpoint /api/voucher_wallet/get_all_vouchers
-    async getVouchers() {
-        const response = await fetch('/api/voucher_wallet/get_all_vouchers');
-        if (!response.ok) {
-            throw new Error('Failed to fetch vouchers');
-        }
-        return await response.json();
-    }
-
     // Display the vouchers in the card
     async displayVouchers() {
-        const vouchers = await this.getVouchers();
+        const vouchers = await this.config.hass.callApi("GET", "/api/voucher_wallet/items");
         this.content.innerHTML = '';
         vouchers.forEach(voucher => {
             const voucherElement = document.createElement('div');
             voucherElement.classList.add('voucher');
             voucherElement.innerHTML = `
                 <h3>${voucher.name}</h3>
-                <p>Value: ${voucher.value}</p>
-                <p>Expiry: ${voucher.expiry}</p>
+                <p><strong>Issuer:</strong> ${voucher.issuer}</p>
+                <p><strong>Redeem Code:</strong> ${voucher.redeem_code}</p>
             `;
             this.content.appendChild(voucherElement);
         });

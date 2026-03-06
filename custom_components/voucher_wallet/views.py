@@ -4,59 +4,41 @@ from aiohttp import web
 
 from homeassistant.components.http import HomeAssistantView
 
-from .const import DOMAIN, VOUCHER_PARAMETERS
+from .const import DOMAIN, ITEM_PARAMETERS
 
 
-class AddVoucherView(HomeAssistantView):
-    """View to add a voucher via HTTP POST."""
+class ItemView(HomeAssistantView):
+    """View to add an item via HTTP POST."""
 
-    url = f"/api/{DOMAIN}/add_voucher"
-    name = f"api:{DOMAIN}:add_voucher"
-    requires_auth = False  # Only for testing, should be True in production
+    url = f"/api/{DOMAIN}/items"
+    name = f"api:{DOMAIN}:items"
+    requires_auth = True
+
+    async def get(self, request: web.Request) -> web.Response:
+        """Handle GET requests to retrieve all items."""
+        hass = request.app["hass"]
+        items = hass.data[DOMAIN]["db"].fetch_items()
+        return self.json({"items": items})
 
     async def post(self, request: web.Request) -> web.Response:
-        """Expects voucher data as query parameters based on VOUCHER_PARAMETERS."""
+        """Expects item data as query parameters based on ITEM_PARAMETERS."""
         try:
             body = await request.json()
         except ValueError:
             return self.json({"error": "Invalid JSON in request body"}, status=400)
 
         for key in body:
-            if key not in VOUCHER_PARAMETERS:
+            if key not in ITEM_PARAMETERS:
                 return self.json({"error": f"Unexpected parameter: {key}"}, status=400)
 
-        for param, details in VOUCHER_PARAMETERS.items():
+        for param, details in ITEM_PARAMETERS.items():
             if details["required"] and not body.get(param):
                 return self.json(
                     {"error": f"Missing required parameter: {param}"}, status=400
                 )
 
         hass = request.app["hass"]
-        hass.data[DOMAIN]["db"].add_voucher(body)
-        return self.json({"status": True})
-
-
-class RemoveVoucherView(HomeAssistantView):
-    """View to remove a voucher via HTTP POST."""
-
-    url = f"/api/{DOMAIN}/remove_voucher"
-    name = f"api:{DOMAIN}:remove_voucher"
-    requires_auth = False  # Only for testing, should be True in production
-
-    async def post(self, request: web.Request) -> web.Response:
-        """Expects a 'code' query parameter to identify the voucher to remove."""
-        try:
-            body = await request.json()
-        except ValueError:
-            return self.json({"error": "Invalid JSON in request body"}, status=400)
-
-        code = body.get("code")
-
-        if not code:
-            return self.json({"error": "Missing code"}, status=400)
-
-        hass = request.app["hass"]
-        hass.data[DOMAIN]["db"].remove_voucher(int(code))
+        hass.data[DOMAIN]["db"].insert_item(body)
         return self.json({"status": True})
 
 
@@ -72,17 +54,3 @@ class ReinitializeDatabaseView(HomeAssistantView):
         hass = request.app["hass"]
         hass.data[DOMAIN]["db"].reinitialize_database()
         return self.json({"status": True})
-
-
-class GetAllVouchersView(HomeAssistantView):
-    """View to retrieve all vouchers via HTTP GET."""
-
-    url = f"/api/{DOMAIN}/get_all_vouchers"
-    name = f"api:{DOMAIN}:get_all_vouchers"
-    requires_auth = False  # Only for testing, should be True in production
-
-    async def get(self, request: web.Request) -> web.Response:
-        """Handle GET requests."""
-        hass = request.app["hass"]
-        vouchers = hass.data[DOMAIN]["db"].get_all_vouchers()
-        return self.json({"vouchers": vouchers})
