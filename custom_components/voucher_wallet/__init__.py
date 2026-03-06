@@ -3,6 +3,7 @@ from __future__ import annotations
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.setup import async_setup_component
 
 from .const import DOMAIN
 from .sqlite_helper import VoucherWalletDatabase
@@ -14,6 +15,7 @@ CARD_URL = "/local/community/voucher_wallet/voucher-wallet-card.js"
 async def _async_register_lovelace_resource(hass: HomeAssistant) -> None:
     """Add the card JS as a Lovelace resource if not already registered."""
     try:
+        await async_setup_component(hass, "lovelace", {})
         resources = hass.data.get("lovelace", {}).get("resources")
         if resources is None:
             return
