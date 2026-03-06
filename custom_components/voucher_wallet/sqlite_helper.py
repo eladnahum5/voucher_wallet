@@ -68,8 +68,18 @@ class VoucherWalletDatabase:
     def remove_voucher(self, code: int):
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
-            c.execute('DELETE FROM vouchers WHERE code = ?', (code,))
+            c.execute('DELETE FROM vouchers WHERE redeem_code = ?', (code,))
             conn.commit()
+
+    def get_all_vouchers(self):
+        """Retrieve all vouchers from the database and return them as a list of dictionaries."""
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            c.execute('SELECT * FROM vouchers')
+            rows = c.fetchall()
+            columns = [description[0] for description in c.description]
+            vouchers = [dict(zip(columns, row)) for row in rows]
+            return vouchers
 
     def reinitialize_database(self):
         with sqlite3.connect(self.db_path) as conn:

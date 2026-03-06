@@ -67,11 +67,11 @@ class ReinitializeDatabaseView(HomeAssistantView):
         hass.data[DOMAIN]["db"].reinitialize_database() 
         return self.json({"status": True})
         
-class GetVouchersView(HomeAssistantView):
+class GetAllVouchersView(HomeAssistantView):
     """View to retrieve all vouchers via HTTP GET."""
 
-    url = f"/api/{DOMAIN}/get_vouchers"
-    name = f"api:{DOMAIN}:get_vouchers"
+    url = f"/api/{DOMAIN}/get_all_vouchers"
+    name = f"api:{DOMAIN}:get_all_vouchers"
     requires_auth = False # Only for testing, should be True in production
 
     async def get(self, request: web.Request) -> web.Response:
