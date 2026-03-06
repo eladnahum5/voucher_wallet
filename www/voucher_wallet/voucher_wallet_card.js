@@ -64,25 +64,77 @@ class VoucherWalletCard extends HTMLElement {
         this.config = config;
     }
 
-    // Display the vouchers in the card
-    async displayVouchers() {
-        const vouchers = await this.config.hass.callApi("GET", "/api/voucher_wallet/items");
-        this.content.innerHTML = '';
-        if (vouchers.length === 0) {
-            this.content.innerHTML = '<p>No vouchers available.</p>';
-            return;
+    // This method is called when the card is updated with new data
+    set hass(hass) {
+        this._hass = hass;
+
+        // If the content element doesn't exist, create it
+        if (!this.content) {
+            // add placeholder content to the card while we fetch the data
+            this.content = document.createElement('div');
+            this.content.innerHTML = '<p>Loading vouchers...</p>';
+            this.appendChild(this.content);
         }
-        vouchers.forEach(voucher => {
-            const voucherElement = document.createElement('div');
-            voucherElement.classList.add('voucher');
-            voucherElement.innerHTML = `
-                <h3>${voucher.name}</h3>
-                <p><strong>Issuer:</strong> ${voucher.issuer}</p>
-                <p><strong>Redeem Code:</strong> ${voucher.redeem_code}</p>
+
+        // Data refresh button
+        if (!this.refreshButton) {
+            this.refreshButton = document.createElement('button');
+            this.refreshButton.textContent = 'Refresh Vouchers';
+            this.refreshButton.addEventListener('click', () => {
+                this.fetchAndDisplayVouchers();
+            });
+            this.content.appendChild(this.refreshButton);
+        }
+
+        // Fetch and display the vouchers when the card is updated
+        this.fetchAndDisplayVouchers();
+    }
+
+    // Method to add vouchers (form submission)
+    async addVoucher(voucherData) {
+        try {
+            const response = await this._hass.callApi('POST', 'voucher_wallet/items', voucherData);
+            console.log('Voucher added successfully:', response);
+            // Refresh the voucher list after adding a new voucher
+            this.fetchAndDisplayVouchers();
+        } catch (error) {
+            console.error('Error adding voucher:', error);
+        }
+    }
+
+
+    // Method to fetch voucher items from the API and display them in the card
+    async fetchAndDisplayVouchers() {
+
+        // Display the vouchers in the card
+        console.log('Fetching voucher items from API...');
+        const data = await this._hass.callApi('GET', 'voucher_wallet/items');
+        console.log('Received voucher data:', data);
+
+        // Clear previous content
+        this.content.innerHTML = '';
+        if (this.refreshButton) {
+            this.content.appendChild(this.refreshButton);
+        }
+
+        // Create a card for each voucher item
+        data.items.forEach(item => {
+            console.log('Displaying voucher item:', item);
+            const itemCard = document.createElement('div');
+            itemCard.classList.add('voucher-item');
+
+            itemCard.innerHTML = `
+                <h3>${item.name}</h3>
+                <p>Issuer: ${item.issuer}</p>
+                <p>Value: $${item.value.toFixed(2)}</p>
+                <p>Redeem Code: ${item.redeem_code}</p>
+                <p>Issue Date: ${new Date(item.issue_date).toLocaleDateString()}</p>
             `;
-            this.content.appendChild(voucherElement);
+
+            this.content.appendChild(itemCard);
         });
     }
+
 }
 
 // Register the custom element with the browser

@@ -67,20 +67,24 @@ class VoucherWalletDatabase:
         self._execute_sql_query(query, (code,))
 
     def fetch_items(self, codes: list[int] | None = None):
-        """Fetch items from the database. If codes are provided, fetch only those items; otherwise, fetch all items."""
+        """Fetch items from the database for all or specific redeem codes."""
         if codes:
             placeholders = ", ".join("?" for _ in codes)
             query = f"SELECT * FROM {TABLE_NAME} WHERE redeem_code IN ({placeholders})"  # noqa: S608
-            rows = self._execute_sql_query(query, tuple(codes))
+            params = tuple(codes)
         else:
             query = f"SELECT * FROM {TABLE_NAME}"  # noqa: S608
-            rows = self._execute_sql_query(query)
+            params = ()
+
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            c.execute(query, params)
+            rows = c.fetchall()
+            columns = [description[0] for description in c.description or []]
+
         if not rows:
             return []
-        columns = [
-            description[0]
-            for description in sqlite3.connect(self.db_path).cursor().description
-        ]
+
         return [dict(zip(columns, row, strict=False)) for row in rows]
 
     def reinitialize_database(self):
