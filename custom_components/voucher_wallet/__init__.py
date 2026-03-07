@@ -20,4 +20,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.http.register_view(ItemIdView)
     hass.http.register_view(ReinitializeDatabaseView)
 
+    hass.components.frontend.async_register_built_in_panel(
+        component_name="iframe",
+        sidebar_title="Voucher Wallet",
+        sidebar_icon="mdi:wallet",
+        frontend_url_path="voucher-wallet",
+        config={"url": "/local/voucher_wallet/index.html"},
+        require_admin=False,
+    )
+
     return True
